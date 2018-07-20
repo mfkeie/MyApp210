@@ -38,4 +38,6 @@ public interface AcademyApi {
 
     @GET("user")
     Single<User> auth (@Header("Authorization") String credentials);
+
+
 }

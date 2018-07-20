@@ -14,6 +14,9 @@ public class User implements Serializable {
 
     private boolean mHasSuccessEmail;
 
+    @SerializedName("data")
+    private DataBean mData;
+
     public User(String email, String password) {
         mEmail = email;
         mPassword = password;
@@ -55,5 +58,47 @@ public class User implements Serializable {
 
     public void setHasSuccessEmail(boolean hasSuccessEmail) {
         mHasSuccessEmail = hasSuccessEmail;
+    }
+
+    public DataBean getData() {
+        return mData;
+    }
+
+    public void setData(DataBean data) {
+        mData = data;
+    }
+
+    public static class DataBean {
+
+        @SerializedName("id")
+        private int mId;
+        @SerializedName("name")
+        private String mName;
+        @SerializedName("email")
+        private String mEmail;
+
+        public int getId() {
+            return mId;
+        }
+
+        public void setId(int id) {
+            mId = id;
+        }
+
+        public String getName() {
+            return mName;
+        }
+
+        public void setName(String name) {
+            mName = name;
+        }
+
+        public String getEmail() {
+            return mEmail;
+        }
+
+        public void setEmail(String email) {
+            mEmail = email;
+        }
     }
 }

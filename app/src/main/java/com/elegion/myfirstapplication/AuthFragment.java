@@ -2,8 +2,6 @@ package com.elegion.myfirstapplication;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.v4.app.Fragment;
@@ -17,18 +15,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.elegion.myfirstapplication.albums.AlbumsActivity;
 import com.elegion.myfirstapplication.model.User;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 
-import java.io.IOException;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
+import okhttp3.Credentials;
 
 public class AuthFragment extends Fragment {
     private AutoCompleteTextView mEmail;
@@ -48,47 +39,26 @@ public class AuthFragment extends Fragment {
         @Override
         public void onClick(View view) {
             if (isEmailValid() && isPasswordValid()) {
-                Request request = new Request.Builder()
-                        .url(BuildConfig.SERVER_URL.concat("/user"))
-                        .build();
 
-                OkHttpClient client = ApiUtils.getBasicAuthClient(
-                        mEmail.getText().toString(),
-                        mPassword.getText().toString(),
-                        true);
-                client.newCall(request).enqueue(new Callback() {
-                    //используем Handler, чтобы показывать ошибки в Main потоке, т.к. наши коллбеки возвращаются в рабочем потоке
-                    Handler mainHandler = new Handler(getActivity().getMainLooper());
+                String credentials = Credentials.basic(mEmail.getText().toString(), mPassword.getText().toString());
 
-                    @Override
-                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                        mainHandler.post(() -> showMessage(R.string.request_error));
-                    }
-
-                    @Override
-                    public void onResponse(@NonNull Call call, @NonNull final Response response) throws IOException {
-                        mainHandler.post(() -> {
-                            if (!response.isSuccessful()) {
-                                //todo добавить полноценную обработку ошибок по кодам ответа от сервера и телу запроса
-                                showMessage(R.string.auth_error);
-                            } else {
-                                try {
-                                    Gson gson = new Gson();
-                                    JsonObject json = gson.fromJson(response.body().string(), JsonObject.class);
-                                    User user = gson.fromJson(json.get("data"), User.class);
-
-                                    /*Intent startProfileIntent = new Intent(getActivity(), ProfileActivity.class);
-                                    startProfileIntent.putExtra(ProfileActivity.USER_KEY, user);
-                                    startActivity(startProfileIntent);*/
-                                    startActivity(new Intent(getActivity(), AlbumsActivity.class));
-                                    getActivity().finish();
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            }
+                ApiUtils.getApiService()
+                .auth(credentials)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(
+                    dataBean -> {
+                        User user1 = new User(dataBean.getData().getEmail(), dataBean.getData().getName(), "");
+                        Intent startProfileIntent = new Intent(getActivity(), ProfileActivity.class);
+                        startProfileIntent.putExtra(ProfileActivity.USER_KEY, user1);
+                        startActivity(startProfileIntent);
+                        getActivity().finish();
+                    }, throwable -> {
+                            //todo добавить полноценную обработку ошибок по кодам ответа от сервера и телу запроса
+                            showMessage(R.string.auth_error);
                         });
-                    }
-                });
+
+
             } else {
                 showMessage(R.string.input_error);
             }
