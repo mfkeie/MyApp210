@@ -48,9 +48,9 @@ public class AuthFragment extends Fragment {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                     dataBean -> {
-                        User user1 = new User(dataBean.getData().getEmail(), dataBean.getData().getName(), "");
+                        User user = new User(dataBean.getData().getEmail(), dataBean.getData().getName(), "");
                         Intent startProfileIntent = new Intent(getActivity(), ProfileActivity.class);
-                        startProfileIntent.putExtra(ProfileActivity.USER_KEY, user1);
+                        startProfileIntent.putExtra(ProfileActivity.USER_KEY, user);
                         startActivity(startProfileIntent);
                         getActivity().finish();
                     }, throwable -> {
